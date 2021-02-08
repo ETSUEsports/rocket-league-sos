@@ -5,7 +5,7 @@ const atob = require('atob');
 
 prompt.get([
     {
-        description: 'Relay delay in ms (used in cloud productions)',
+        description: 'Relay delay in milliseconds (used in cloud productions)',
         pattern: /^\d+$/,
         message: 'Must be a number',
         name: 'delay',
