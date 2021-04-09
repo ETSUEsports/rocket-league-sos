@@ -2,6 +2,39 @@ const WebSocket = require('ws');
 const prompt = require('prompt');
 const { success, error, warn, info, log, indent } = require('cli-msg');
 const atob = require('atob');
+let argv = require('minimist')(process.argv);
+
+let promptsPassed = false;
+
+function addPromptOverrideProperty(key, val) {
+    if (!prompt.override) {
+        prompt.override = {};
+    }
+    prompt.override[key] = val;
+}
+
+if (argv.delay) {
+    addPromptOverrideProperty('delay', argv.delay);
+}
+if (argv.port) {
+    addPromptOverrideProperty('port',argv.port);
+}
+if (argv.rocketLeagueHost) {
+    addPromptOverrideProperty('rocketLeagueHost',argv.rocketLeagueHost);
+}
+
+//Add timeout, in case of programmatic usage where a user may not be fully present
+if (argv.timeout) {
+    let timeoutMs = parseInt(argv.timeout, 10);
+    if (timeoutMs > 0) {
+        setTimeout(() => {
+            if (!promptsPassed) {
+                console.error(`\n\nPrompts not completed within timeout limit (${timeoutMs}ms). Exiting`);
+                process.exit(100);
+            }
+        }, timeoutMs);
+    }
+}
 
 prompt.get([
     {
@@ -22,11 +55,12 @@ prompt.get([
     },
     {
         description: "Hostname:Port that Rocket League is running on",
-        name: 'rocketLeagueHostname',
+        name: 'rocketLeagueHost',
         required: true,
         default: "localhost:49122"
     }
 ], function (e, r) {
+    promptsPassed = true;
     /**
      * Rocket League WebSocket client
      * @type {WebSocket}
@@ -62,11 +96,11 @@ prompt.get([
         });
     });
 
-    initRocketLeagueWebsocket(r.rocketLeagueHostname);
+    initRocketLeagueWebsocket(r.rocketLeagueHost);
     setInterval(function () {
        if (wsClient.readyState === WebSocket.CLOSED) {
            warn.wb("Rocket League WebSocket Server Closed. Attempting to reconnect");
-           initRocketLeagueWebsocket(r.rocketLeagueHostname);
+           initRocketLeagueWebsocket(r.rocketLeagueHost);
        }
     }, 10000);
 
@@ -112,11 +146,11 @@ prompt.get([
         }
     }
 
-    function initRocketLeagueWebsocket(rocketLeagueHostname) {
-        wsClient = new WebSocket("ws://"+rocketLeagueHostname);
+    function initRocketLeagueWebsocket(rocketLeagueHost) {
+        wsClient = new WebSocket("ws://"+rocketLeagueHost);
 
         wsClient.onopen = function open() {
-            success.wb("Connected to Rocket League on "+rocketLeagueHostname);
+            success.wb("Connected to Rocket League on "+rocketLeagueHost);
         };
         wsClient.onmessage = function(message) {
             let sendMessage = message.data;
@@ -128,7 +162,7 @@ prompt.get([
             }, relayMsDelay);
         };
         wsClient.onerror = function (err) {
-            error.wb(`Error connecting to Rocket League on host "${rocketLeagueHostname}"\nIs the plugin loaded into Rocket League? Run the command "plugin load sos" from the BakkesMod console to make sure`);
+            error.wb(`Error connecting to Rocket League on host "${rocketLeagueHost}"\nIs the plugin loaded into Rocket League? Run the command "plugin load sos" from the BakkesMod console to make sure`);
         };
     }
 });
