@@ -13,13 +13,13 @@ function addPromptOverrideProperty(key, val) {
     prompt.override[key] = val;
 }
 
-if (argv.delay) {
+if (argv.hasOwnProperty('delay')) {
     addPromptOverrideProperty('delay', argv.delay);
 }
-if (argv.port) {
+if (argv.hasOwnProperty('port')) {
     addPromptOverrideProperty('port',argv.port);
 }
-if (argv.rocketLeagueHost) {
+if (argv.hasOwnProperty('rocketLeagueHost')) {
     addPromptOverrideProperty('rocketLeagueHost',argv.rocketLeagueHost);
 }
 
